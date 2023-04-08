@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+
+AWS_EC2_ID="$(curl -sS http://169.254.169.254/latest/meta-data/instance-id)"
+OSSEC_PROCESS="ossec-hids-agent"
+#SLACK_WEBHOOK="https://hooks.slack.com/services/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"
+#
+## Functions:
+# It notifies Slack and exists with error if the previous process ended badly.
+#notify_slack_if_error() {
+#  curl -X POST \
+#    --data-urlencode "payload={\"channel\": \"#infra-alerts\", \"username\": \"AWS EC2 $AWS_EC2_ID\", \"text\": \"$1\", \"icon_emoji\": \":ossec:\"}" \
+#  $SLACK_WEBHOOK &> /dev/null
+#  exit 1
+#}
+
+# Add Yum repo configuration
+wget -q -O - https://updates.atomicorp.com/installers/atomic | sudo bash -yes
+
+# Agent
+sudo yum install ossec-hids-agent -y
+
+# Adding password for agent-auth
+echo "556dbeb79b2728d566bad197e7bd9b8f" > /var/ossec/etc/authd.pass
+
+# Linking agent to manager 
+/var/ossec/bin/agent-auth -A "$(hostname)-$AWS_EC2_ID" -m 176.0.22.93 -P /var/ossec/etc/authd.pass
+
+# Setting OSSEC manager IP
+sed -i 's/10.66.6.211/176.0.22.93/g' /var/ossec/etc/ossec.conf
+
+# Starting OSSEC service
+/var/ossec/bin/ossec-control start
+
+echo "Ossec ($OSSEC_PROCESS) is up and running!"

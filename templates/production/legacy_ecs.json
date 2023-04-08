@@ -1,0 +1,77 @@
+{
+  "variables": {
+    "environment": "",
+    "region": "us-east-1",
+    "ec2_instance_type": "t3.small",
+    "subnet_id": ""
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "ami_name": "{{user `environment`}}-legacy-ecs-instance-ami_{{timestamp}}",
+      "region": "{{user `region`}}",
+      "subnet_id": "{{user `subnet_id`}}",
+      "source_ami_filter": {
+        "most_recent": true,
+        "filters": {
+          "virtualization-type": "hvm",
+          "name": "amzn2-ami-ecs-hvm-2.0.*-x86_64-ebs",
+          "root-device-type": "ebs"
+        },
+        "owners": 
+        ["amazon"]
+      },
+      "instance_type": "{{user `ec2_instance_type`}}",
+      "ssh_username": "ec2-user",
+      "tags": {
+        "Name": "{{user `environment`}}-legacy-ecs-instance-ami_{{timestamp}}",
+        "Environment": "{{user `environment`}}",
+        "Service": "ecs",
+        "Project": "legacy"
+      }
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "files/production/instance_script",
+      "destination": "/tmp/instance_script"
+    }, {
+      "type": "file",
+      "source": "files/production/jumpcloud_script",
+      "destination": "/tmp/jumpcloud_script"
+    }, {
+      "type": "file",
+      "source": "files/production/legacy_nessus_script",
+      "destination": "/tmp/nessus_script"
+    }, {     
+      "type": "file",
+      "source": "files/production/sumologic_script",
+      "destination": "/tmp/sumologic_script"
+    }, {     
+      "type": "file",
+      "source": "files/production/legacy_ossec_script",
+      "destination": "/tmp/ossec_script"
+    }, {
+      "type": "file",
+      "source": "files/us-east-1-bundle.pem",
+      "destination": "/tmp/us-east-1-bundle.pem"
+    }, {    
+      "type": "file",
+      "source": "scripts/CIS/CIS-LBK.tar.gz",
+      "destination": "/tmp/CIS-LBK.tar.gz"
+    }, {      
+      "type": "shell",
+      "execute_command": "echo 'packer' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "script": "scripts/production/packages.sh"
+    }, {                     
+      "type": "shell",
+      "execute_command": "echo 'packer' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "script": "scripts/production/legacy_acme_script.sh"
+    }, {      
+      "type": "shell",
+      "execute_command": "echo 'packer' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "script": "scripts/production/cis-script.sh"
+    }
+  ]
+}

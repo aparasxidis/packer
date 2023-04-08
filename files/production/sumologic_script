@@ -1,0 +1,86 @@
+#!/bin/bash
+
+set -euo pipefail
+
+AWS_EC2_ID="$(curl -sS http://169.254.169.254/latest/meta-data/instance-id)"
+SUMOLOGIC_PROCESS="collector"
+SUMOLOGIC_CONFIG_PATH="/opt/SumoCollector/config/sources.json"
+SUMOLOGIC_ACCESS_ID="suAiERoPvDqTQT"
+SUMOLOGIC_ACCESS_KEY="risxuYimSCiA87bFwF0y7kqmQYLotrUhnHtrxvpsutyAJZk10EPeFATPPXRNnTxQ"
+#SLACK_WEBHOOK="https://hooks.slack.com/services/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"
+
+## Functions:
+# It notifies Slack and exists with error if the previous process ended badly.
+#notify_slack_if_error() {
+#  curl -X POST \
+#    --data-urlencode "payload={\"channel\": \"#infra-alerts\", \"username\": \"AWS EC2 $AWS_EC2_ID\", \"text\": \"$1\", \"icon_emoji\": \":sumologic:\"}" \
+#  $SLACK_WEBHOOK &> /dev/null
+#  exit 1
+#}
+
+# It installs JumpCloud by using the installer provided by the service.
+mkdir -p /opt/SumoCollector/config
+echo '{' > $SUMOLOGIC_CONFIG_PATH
+echo '  "api.version": "v1",' >> $SUMOLOGIC_CONFIG_PATH
+echo '  "sources": [' >> $SUMOLOGIC_CONFIG_PATH
+echo '    {' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "sourceType": "LocalFile",' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "name": "Messages",' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "pathExpression": "/var/log/messages*",' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "multilineProcessingEnabled": true,' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "useAutolineMatching": true,' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "automaticDateParsing": true,' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "category": "linux/system"' >> $SUMOLOGIC_CONFIG_PATH
+echo '    },' >> $SUMOLOGIC_CONFIG_PATH
+echo '    {' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "sourceType": "LocalFile",' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "name": "Secure",' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "pathExpression": "/var/log/secure*",' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "multilineProcessingEnabled": true,' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "useAutolineMatching": true,' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "automaticDateParsing": true,' >> $SUMOLOGIC_CONFIG_PATH
+echo '      "category": "linux/system"' >> $SUMOLOGIC_CONFIG_PATH
+echo '    }' >> $SUMOLOGIC_CONFIG_PATH
+echo '  ]' >> $SUMOLOGIC_CONFIG_PATH
+echo '}' >> $SUMOLOGIC_CONFIG_PATH
+curl -o /opt/SumoCollector/SumoCollector.sh "https://collectors.sumologic.com/rest/download/linux/64"
+chmod +x /opt/SumoCollector/SumoCollector.sh
+/opt/SumoCollector/SumoCollector.sh -q \
+  -VskipRegistration=true \
+  -Vephemeral=true \
+  -Vsources=/opt/SumoCollector/config/sources.json \
+  -Vsumo.accessid=${SUMOLOGIC_ACCESS_ID} \
+  -Vsumo.accesskey=${SUMOLOGIC_ACCESS_KEY} \
+  -Vcollector.name="$(hostname)-$AWS_EC2_ID"
+service collector start
+
+
+#start_nessus() {
+#  service $SUMOLOGIC_PROCESS start 1> /dev/null
+#}
+#
+#test_if_installed() {
+#  test -d /opt/SumoCollector/license
+#}
+#
+#test_if_started() {
+#  service $SUMOLOGIC_PROCESS status 1> /dev/null
+#}
+#
+## Check if the process jcagent is installed:
+#if ! test_if_installed; then
+#  echo "Installing the $SUMOLOGIC_PROCESS process."
+#  if ! install_nessus; then
+#    notify_slack_if_error "Unable to install SumoLogic on the instance *$(hostname)*."
+#  fi
+#fi
+#
+## Check if the process jcagent is starteds
+#if ! test_if_started; then
+#  echo "Starting the $SUMOLOGIC_PROCESS process."
+#  if ! start_nessus; then
+#    notify_slack_if_error "Unable to start SumoLogic on the instance *$(hostname)*."
+#  fi
+#fi
+
+echo "SumoLogic ($SUMOLOGIC_PROCESS) is up and running!"

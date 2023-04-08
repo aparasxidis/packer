@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+
+#AWS_EC2_ID="$(curl -sS http://169.254.169.254/latest/meta-data/instance-id)"
+#_PROCESS="ossec-hids-agent"
+#SLACK_WEBHOOK="https://hooks.slack.com/services/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"
+BITDEFENDER_URL="https://cloud.gravityzone.bitdefender.com/Packages/NIX/0/XQEupy/Bitdefender_for_Linux.tar"
+
+## Functions:
+# It notifies Slack and exists with error if the previous process ended badly.
+#notify_slack_if_error() {
+#  curl -X POST \
+#    --data-urlencode "payload={\"channel\": \"#infra-alerts\", \"username\": \"AWS EC2 $AWS_EC2_ID\", \"text\": \"$1\", \"icon_emoji\": \":ossec:\"}" \
+#  $SLACK_WEBHOOK &> /dev/null
+#  exit 1
+#}
+
+echo "Start Bitdefender BEST Installation"
+
+# Get Linux tar
+cd /tmp && sudo wget $BITDEFENDER_URL
+#
+sudo tar -xvf Bitdefender_for_Linux.tar
+#
+sudo chmod +x installer
+#
+./installer
+# Clean up tmp
+cd /tmp && sudo rm -rf Bitdefender_for_Linux.tar
+
+#start_nessus() {
+#  service $OSSEC_PROCESS start 1> /dev/null
+#}
+#
+#test_if_installed() {
+#  yum list installed $OSSEC_PROCESS &> /dev/null
+#}
+#
+#test_if_started() {
+#  service $OSSEC_PROCESS status &> /dev/null
+#}
+#
+## Check if the process jcagent is installed:
+#if ! test_if_installed; then
+#  echo "Installing the $OSSEC_PROCESS process."
+#  if ! install_nessus; then
+#    notify_slack_if_error "Unable to install Ossec on the instance *$(hostname)*."
+#  fi
+#fi
+#
+## Check if the process jcagent is starteds
+#if ! test_if_started; then
+#  echo "Starting the $OSSEC_PROCESS process."
+#  if ! start_nessus; then
+#    notify_slack_if_error "Unable to start Ossec on the instance *$(hostname)*."
+#  fi
+#fi
+
+echo "Bitdefender is up and running!"

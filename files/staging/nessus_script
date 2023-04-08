@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Variables
+AWS_EC2_ID="$(curl -sS http://169.254.169.254/latest/meta-data/instance-id)"
+TENABLE_KEY="8ce454d002ff8fdaa291da33bb18353ba576b31ba21be86be0950849207c5479"
+TENABLE_HOST="cloud.tenable.com"
+TENABLE_PORT="443"
+TENABLE_AGENT_AMZN_URL="https://script-packages-agents.s3.us-east-2.amazonaws.com/nessus/NessusAgent-8.3.0-amzn.x86_64.rpm"
+
+echo "Start Nessus Agent Install"
+
+# Install wget
+sudo yum install wget -y
+# Get Amazon Linux 2 Nessus RPM
+cd /tmp && sudo wget $TENABLE_AGENT_AMZN_URL
+# Install RPM
+cd /tmp && sudo rpm -ivh Nessus*.rpm
+# Start Nessus Ageent
+sudo service nessusagent restart
+# Link Nessus Agent to Tenable Account
+sudo /opt/nessus_agent/sbin/nessuscli agent link \
+  --key=$TENABLE_KEY \
+  --name="$(hostname)-$AWS_EC2_ID" \
+  --host=$TENABLE_HOST \
+  --port=$TENABLE_PORT
+# Clean up tmp
+cd /tmp && sudo rm -rf Nessus*.rpm
+
+echo "Nessus Agent Install Complete"

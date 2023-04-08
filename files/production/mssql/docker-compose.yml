@@ -1,0 +1,25 @@
+version: '3.7'
+services:
+  sqlserver:
+#    image: mcr.microsoft.com/mssql/server:2019-CU12-ubuntu-20.04
+    image: 150772267893.dkr.ecr.us-east-1.amazonaws.com/production-aml-mssql_server_2019:latest
+    user: root
+    ports:
+      - 5434:1433
+    volumes:
+      - /mssql_data:/var/opt/sqlserver/
+      - ./mssql/mssql.conf:/var/opt/mssql/mssql.conf
+      - ./mssql/aml-mssql.arcusfi.com/aml-mssql.arcusfi.com.key:/etc/ssl/private/aml-mssql.arcusfi.com.key
+      - ./mssql/aml-mssql.arcusfi.com/aml-mssql.arcusfi.com.cer:/etc/ssl/certs/aml-mssql.arcusfi.com.cer
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: A+?yRZAqA9+Dt%8M
+      MSSQL_BACKUP_DIR: /var/opt/sqlserver/backup
+      MSSQL_DATA_DIR: /var/opt/sqlserver/data
+      MSSQL_LOG_DIR: /var/opt/sqlserver/log
+      MSSQL_PID: Express
+    networks:
+      - arcus-network
+networks:
+  arcus-network:
+    driver: bridge

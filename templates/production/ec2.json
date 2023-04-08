@@ -1,0 +1,61 @@
+{
+  "variables": {
+    "environment": "",
+    "region": "us-east-1",
+    "ec2_instance_type": "t3.small",
+    "subnet_id": ""
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "ami_name": "{{user `environment`}}-nbg-ec2-instance-amzn-linux2_{{timestamp}}",
+      "region": "{{user `region`}}",
+      "subnet_id": "{{user `subnet_id`}}",
+      "source_ami_filter": {
+        "most_recent": true,
+        "filters": {
+          "virtualization-type": "hvm",
+          "name": "amzn2-ami-hvm-2.0.*-x86_64-gp2",
+          "root-device-type": "ebs"
+        },
+        "owners": 
+        ["amazon"]
+      },
+      "instance_type": "{{user `ec2_instance_type`}}",
+      "ssh_username": "ec2-user",
+      "tags": {
+        "Name": "{{user `environment`}}-nbg-ec2-instance-amzn-linux2_{{timestamp}}",
+        "Environment": "{{user `environment`}}",
+        "Service": "ec2",
+        "Project": "nbg"
+      }
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "files/production/instance_script",
+      "destination": "/tmp/instance_script"
+    }, {
+      "type": "file",
+      "source": "files/production/jumpcloud_script",
+      "destination": "/tmp/jumpcloud_script"
+    }, {
+      "type": "file",
+      "source": "files/production/nbg_nessus_script",
+      "destination": "/tmp/nessus_script"
+    }, {     
+      "type": "file",
+      "source": "files/production/sumologic_script",
+      "destination": "/tmp/sumologic_script"
+    }, {      
+      "type": "file",
+      "source": "files/production/nbg_ossec_script",
+      "destination": "/tmp/ossec_script"
+    }, {   
+      "type": "shell",
+      "execute_command": "echo 'packer' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'",
+      "script": "scripts/production/ec2_init.sh"
+    }
+  ]
+}

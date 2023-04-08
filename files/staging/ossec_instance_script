@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+
+AWS_EC2_ID="$(curl -sS http://169.254.169.254/latest/meta-data/instance-id)"
+#SLACK_WEBHOOK="https://hooks.slack.com/services/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"
+
+## Functions:
+# It notifies Slack and exists with error if the previous process ended badly.
+#notify_slack() {
+#  curl -X POST \
+#    --data-urlencode "payload={\"channel\": \"#infra-alerts\", \"username\": \"AWS EC2 $AWS_EC2_ID\", \"text\": \"$1\", \"icon_emoji\": \":aws-ec2:\"}" \
+#  $SLACK_WEBHOOK &> /dev/null
+#}
+
+#/usr/local/bin/aws_ssm_script
+/usr/local/bin/jumpcloud_script
+#/usr/local/bin/nessus_script
+#/usr/local/bin/sumologic_script
+#/usr/local/bin/bitdefender_script
+#notify_slack "The EC2 instance *$(hostname)* just started."
